@@ -14,7 +14,7 @@ import Test.HUnit
 type BitCode = [Bool]
 
 -- END OF DO NOT MODIFY ZONE
---test
+
 --------------------------------------------------------------------------------
 
 {- characterCounts s
@@ -23,11 +23,19 @@ type BitCode = [Bool]
    EXAMPLES:
  -}
 characterCounts :: String -> Table Char Int
-characterCounts = undefined
+characterCounts s = characterCountsAux s Table.empty
 
+
+characterCountsAux [] table = table
+characterCountsAux (x:xs) | Table.exists table x = characterCountsAux xs (Table.insert table x) (1 + frJust(Table.lookup x))
+                          | othewise = characterCountsAux xs (Table.insert table x 1)
+
+frJust :: Maybe a -> a
+frJust (Just a) = a
 
 -- modify and add comments as needed
 data HuffmanTree = HuffmanTree ()
+
 
 
 {- huffmanTree t
