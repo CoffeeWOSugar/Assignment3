@@ -14,7 +14,7 @@ import Test.HUnit
 type BitCode = [Bool]
 
 -- END OF DO NOT MODIFY ZONE
-
+--test
 --------------------------------------------------------------------------------
 
 {- characterCounts s
