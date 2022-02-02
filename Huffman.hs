@@ -23,19 +23,21 @@ type BitCode = [Bool]
    EXAMPLES:
  -}
 characterCounts :: String -> Table Char Int
-frJust :: Maybe a -> a
-frJust (Just a) = a
-frJust Nothing = error "Nothing in frJust."
-
 characterCounts t = characterCountsAux t Table.empty
 
 characterCountsAux :: String -> Table Char Int -> Table Char Int
 characterCountsAux [] table = table
 characterCountsAux (x:xs) table | Table.exists table x = characterCountsAux xs (Table.insert table x (1 + frJust(Table.lookup table x)))
                                 | otherwise = characterCountsAux xs (Table.insert table x 1)
-
-frJust :: Maybe a -> a 
+frJust :: Maybe a -> a
 frJust (Just a) = a
+frJust Nothing = error "Nothing in frJust."
+
+--tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
+tableToQueue :: Table k Int -> PriorityQueue k
+tableToQueue t = Table.iterate t (PriorityQueue.insert) PriorityQueue.empty
+
+
 
 -- modify and add comments as needed
 data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree
