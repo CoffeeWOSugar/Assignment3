@@ -23,12 +23,18 @@ type BitCode = [Bool]
    EXAMPLES:
  -}
 characterCounts :: String -> Table Char Int
-characterCounts = undefined
+characterCounts t = characterCountsAux t Table.empty
 
+characterCountsAux :: String -> Table Char Int -> Table Char Int
+characterCountsAux [] table = table
+characterCountsAux (x:xs) table | Table.exists table x = characterCountsAux xs (Table.insert table x (1 + frJust(Table.lookup table x)))
+                                | otherwise = characterCountsAux xs (Table.insert table x 1)
 
 -- modify and add comments as needed
 data HuffmanTree = HuffmanTree ()
 
+frJust :: Maybe a -> a 
+frJust (Just a) = a
 
 {- huffmanTree t
    PRE:  t maps each key to a positive value
