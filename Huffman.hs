@@ -38,12 +38,8 @@ frJust :: Maybe a -> a
 frJust (Just a) = a
 
 -- modify and add comments as needed
-data HuffmanTree = HuffmanTree ()
+data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree
 
-<<<<<<< HEAD
-=======
-
->>>>>>> b2b3d34d2b70f729563e4198e3400c10f05f47a5
 
 {- huffmanTree t
    PRE:  t maps each key to a positive value
