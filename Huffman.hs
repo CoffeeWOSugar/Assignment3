@@ -59,7 +59,7 @@ huffmanTree = undefined
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable = undefined
 
-
+mergeTrees :: HuffmanTree -> HuffmanTree -> HuffmanTree
 {- encode h s
    PRE: All characters in s appear in h
    RETURNS: the concatenation of the characters of s encoded using the Huffman code table of h.
