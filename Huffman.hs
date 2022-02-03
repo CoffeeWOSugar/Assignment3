@@ -25,6 +25,7 @@ type BitCode = [Bool]
  -}
 characterCounts :: String -> Table Char Int
 characterCounts t = characterCountsAux t Table.empty
+
 {- characterCountsAux s t
    PRECONS: A string s and an empty table t.
    RETURNS: A table that maps each character that occurs in s to the number of 
@@ -78,9 +79,16 @@ huffmanTree = undefined
 huffmanTreeAux :: PriorityQueue HuffmanTree -> HuffmanTree
 huffmanTreeAux = undefined
 
--- merge två träd buntas till ett där 
+{- mergeTrees t1 t2
+   PRECONS: Two Huffmantrees
+   RETURNS: A Huffmantree with the sum of the weights and the two trees as it's children.
+   EXAMPLE: 
+-}
 mergeTrees :: HuffmanTree -> HuffmanTree -> HuffmanTree
-mergeTrees = undefined
+mergeTrees t1 t2 = Node (weight t1 + weight t2) t1 t2
+  where weight :: HuffmanTree -> Int
+        weight (Leaf _ w)   = w
+        weight (Node w _ _) = w
 
 {- codeTable h
    PRECONS: 
