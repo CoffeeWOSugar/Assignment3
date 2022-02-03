@@ -43,6 +43,7 @@ tableToQueue t = Table.iterate t (PriorityQueue.insert) PriorityQueue.empty
 data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree
 
 
+
 {- huffmanTree t
    PRE:  t maps each key to a positive value
    RETURNS: a Huffman tree based on the character counts in t
