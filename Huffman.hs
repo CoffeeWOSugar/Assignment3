@@ -34,13 +34,20 @@ frJust (Just a) = a
 frJust Nothing = error "Nothing in frJust."
 
 --tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
-tableToQueue :: Table k Int -> PriorityQueue k
-tableToQueue t = Table.iterate t (PriorityQueue.insert) PriorityQueue.empty
+--omvandlingen från char int i table till queue av träd krävde att vi skapar en aux som skapar leafs och insertar
+tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
+tableToQueue t = Table.iterate t tableToQueueAux PriorityQueue.empty
 
+--
+tableToQueueAux :: PriorityQueue HuffmanTree -> (Char, Int) -> PriorityQueue HuffmanTree
+tableToQueueAux x y = PriorityQueue.insert x (createLeaf y)
 
+--skapar leafs och av key - value par, och lägger sedan till i par med leaf o value så att de kan insertas i queue
+createLeaf :: (Char, Int) -> (HuffmanTree, Int)
+createLeaf (x,y) = ((Leaf x y),y)
 
 -- modify and add comments as needed
-data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree
+data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Show
 
 
 
@@ -52,6 +59,13 @@ data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree
 huffmanTree :: Table Char Int -> HuffmanTree
 huffmanTree = undefined
 
+-- queue av träd buntas två och två tills att ett träd återstår,
+huffmanTreeAux :: PriorityQueue HuffmanTree -> HuffmanTree
+huffmanTreeAux = undefined
+
+-- merge två träd buntas till ett där 
+mergeTrees :: HuffmanTree -> HuffmanTree -> HuffmanTree
+mergeTrees = undefined
 
 {- codeTable h
    RETURNS: a table that maps each character in h to its Huffman code
@@ -59,6 +73,8 @@ huffmanTree = undefined
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable = undefined
+
+
 
 
 {- encode h s
