@@ -18,22 +18,37 @@ type BitCode = [Bool]
 --------------------------------------------------------------------------------
 
 {- characterCounts s
-   RETURNS: a table that maps each character that occurs in s to the number of
-         times the character occurs in s
-   EXAMPLES:
+   PRECONS: A string s.
+   RETURNS: A table that maps each character that occurs in s to the number of
+            times the character occurs in s.
+   EXAMPLE:
  -}
 characterCounts :: String -> Table Char Int
 characterCounts t = characterCountsAux t Table.empty
-
+{- characterCountsAux s t
+   PRECONS: A string s and an empty table t.
+   RETURNS: A table that maps each character that occurs in s to the number of 
+            times the character occurs in s.
+   EXAMPLE: 
+   VARIANT: length s
+-}
 characterCountsAux :: String -> Table Char Int -> Table Char Int
 characterCountsAux [] table = table
 characterCountsAux (x:xs) table | Table.exists table x = characterCountsAux xs (Table.insert table x (1 + frJust(Table.lookup table x)))
                                 | otherwise = characterCountsAux xs (Table.insert table x 1)
+
+{- frJust a
+   PRECONS: A value of type Maybe a. Nothing will return an error.
+   RETURNS: The value of a.
+   EXAMPLE: frJust (Just 6) = 6
+-}
 frJust :: Maybe a -> a
 frJust (Just a) = a
 frJust Nothing = error "Nothing in frJust."
 
 --tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
+
+-- Snyggt! 
 --omvandlingen från char int i table till queue av träd krävde att vi skapar en aux som skapar leafs och insertar
 tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
 tableToQueue t = Table.iterate t tableToQueueAux PriorityQueue.empty
@@ -52,9 +67,9 @@ data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Sho
 
 
 {- huffmanTree t
-   PRE:  t maps each key to a positive value
+   PRECONS:  t maps each key to a positive value
    RETURNS: a Huffman tree based on the character counts in t
-   EXAMPLES:
+   EXAMPLE:
  -}
 huffmanTree :: Table Char Int -> HuffmanTree
 huffmanTree = undefined
@@ -68,8 +83,9 @@ mergeTrees :: HuffmanTree -> HuffmanTree -> HuffmanTree
 mergeTrees = undefined
 
 {- codeTable h
+   PRECONS: 
    RETURNS: a table that maps each character in h to its Huffman code
-   EXAMPLES:
+   EXAMPLE:
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable = undefined
@@ -78,25 +94,26 @@ codeTable = undefined
 
 
 {- encode h s
-   PRE: All characters in s appear in h
+   PRECONS: All characters in s appear in h
    RETURNS: the concatenation of the characters of s encoded using the Huffman code table of h.
-   EXAMPLES:
+   EXAMPLE:
  -}
 encode :: HuffmanTree -> String -> BitCode
 encode = undefined
 
 {- compress s
+   PRECONS:
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)
-   EXAMPLES:
+   EXAMPLE:
  -}
 compress :: String -> (HuffmanTree, BitCode)
 compress = undefined
 
 
 {- decompress h bits
-   PRE:  bits is a concatenation of valid Huffman code words for h
+   PRECONS:  bits is a concatenation of valid Huffman code words for h
    RETURNS: the decoding of bits under h
-   EXAMPLES:
+   EXAMPLE:
  -}
 decompress :: HuffmanTree -> BitCode -> String
 decompress = undefined
