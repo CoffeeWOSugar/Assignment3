@@ -67,7 +67,7 @@ createLeaf :: (Char, Int) -> (HuffmanTree, Int)
 createLeaf (x,y) = ((Leaf x y),y)
 
 -- modify and add comments as needed
-data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Show
+data HuffmanTree = Void | Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Show
 
 {- huffmanTree t
    PRECONS:  t maps each key to a positive value
@@ -76,7 +76,9 @@ data HuffmanTree = Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Sho
    ! UNTESTED !
  -}
 huffmanTree :: Table Char Int -> HuffmanTree
-huffmanTree t = fst (fst (least (huffmanTreeAux (tableToQueue t))))
+huffmanTree t
+  | PQ.is_empty (tableToQueue t) = Void
+  | otherwise = fst (fst (least (huffmanTreeAux (tableToQueue t))))
 
 {- huffmanTreeAux q
    PRECONS: A priorityQueue of at least one HuffmanTree.
@@ -87,7 +89,7 @@ huffmanTree t = fst (fst (least (huffmanTreeAux (tableToQueue t))))
 -}
 huffmanTreeAux :: PriorityQueue HuffmanTree -> PriorityQueue HuffmanTree
 huffmanTreeAux q
-  | PQ.is_empty q    = error "Empty Queue"
+  | PQ.is_empty q    = PQ.empty
   | PQ.is_empty nxtQ = q
   | otherwise        = huffmanTreeAux (PQ.insert (snd (least nxtQ)) (mergeTrees nxtT nxt2T, prio + prio2))
 --     (The queue without the next two elements in queue) /\            /\ next two trees merged /\ the sum of respective priorities.
@@ -97,7 +99,7 @@ huffmanTreeAux q
         nxt2Q = snd (least nxtQ)
         nxt2T = fst (fst (least nxtQ))
         prio2 = snd (fst (least nxtQ))
-        
+
 
 {- mergeTrees t1 t2
    PRECONS: Two Huffmantrees
@@ -114,6 +116,7 @@ mergeTrees t1 t2 = Node (weight t1 + weight t2) t1 t2
    EXAMPLE: 
 -}
 weight :: HuffmanTree -> Int
+weight Void         = 0
 weight (Leaf _ w)   = w
 weight (Node w _ _) = w
 
@@ -123,7 +126,25 @@ weight (Node w _ _) = w
    EXAMPLE:
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
-codeTable = undefined
+codeTable Void = Table.empty
+codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
+
+{- uncurryTwo f x (a, b)
+   PRECONS: 
+   RETURNS: a table that maps each character in h to its Huffman code
+   EXAMPLE:
+-}
+uncurryTwo f x (a,b) = f x a b
+
+{- codeTableAux h s
+   PRECONS: 
+   RETURNS:
+   EXAMPLE:
+   VARIANT: 
+-}
+codeTableAux :: HuffmanTree -> BitCode -> [(Char, BitCode)]
+codeTableAux (Leaf c _) s = [(c, s)]
+codeTableAux (Node _ t1 t2) s = codeTableAux t1 (s ++ [False]) ++ codeTableAux t2 (s ++ [True])
 
 {- encode h s
    PRECONS: All characters in s appear in h
@@ -131,7 +152,9 @@ codeTable = undefined
    EXAMPLE:
  -}
 encode :: HuffmanTree -> String -> BitCode
-encode = undefined
+encode _ []              = []
+encode (Leaf a b) (_:xs) = True : encode (Leaf a b) xs
+encode h (x:xs)          = frJust(Table.lookup (codeTable h) x) ++ encode h xs
 
 {- compress s
    PRECONS:
@@ -139,7 +162,8 @@ encode = undefined
    EXAMPLE:
  -}
 compress :: String -> (HuffmanTree, BitCode)
-compress = undefined
+compress s = (tree, encode tree s)
+  where tree = huffmanTree(characterCounts s)
 
 
 {- decompress h bits
@@ -148,9 +172,19 @@ compress = undefined
    EXAMPLE:
  -}
 decompress :: HuffmanTree -> BitCode -> String
-decompress = undefined
+decompress Void _ = ""
+decompress h b = decompressAux h (decompressHelper h b)
 
+decompressAux (Leaf a b) (c, [])     = []
+decompressAux (Leaf a b) (c, (x:xs)) = [a] ++ decompressAux (Leaf a b) (c, xs)
+decompressAux h (c, [])              = c
+decompressAux h (c, bs)              = c ++ decompressAux h (decompressHelper h bs)
 
+decompressHelper (Node _ t1 t2) [] = ("", [])
+decompressHelper (Leaf c _) lst = ([c], lst)
+decompressHelper (Node _ t1 t2) (b:bs)
+  | b         = decompressHelper t2 bs
+  | otherwise = decompressHelper t1 bs
 --------------------------------------------------------------------------------
 -- Test Cases
 -- You may add your own test cases here:
