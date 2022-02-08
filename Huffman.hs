@@ -55,14 +55,28 @@ frJust Nothing = error "Nothing in frJust."
 
 -- Snyggt! 
 --omvandlingen från char int i table till queue av träd krävde att vi skapar en aux som skapar leafs och insertar
+{- tableToQueue t
+   PRECONS: är det ett problem om int = 0 , dvs om table inte genererats av tidigare funktion
+   RETURNS: A priorityQueue with leafs that contains a key and value pair
+   EXAMPLE: 
+-}
 tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
 tableToQueue t = Table.iterate t tableToQueueAux PQ.empty
 
---
+{- tableToQueueAux t
+   PRECONS: 
+   RETURNS: A priorityQueue with leafs that contains a key and value pair
+   EXAMPLE: 
+-}
 tableToQueueAux :: PriorityQueue HuffmanTree -> (Char, Int) -> PriorityQueue HuffmanTree
 tableToQueueAux x y = PQ.insert x (createLeaf y)
 
 --skapar leafs och av key - value par, och lägger sedan till i par med leaf o value så att de kan insertas i queue
+{- createLeaf charIntPair
+   PRECONS: 
+   RETURNS: (a leaf based on charIntPair, the int in charIntPair)
+   EXAMPLE:  createLeaf ('a',2) = ((Leaf 'a' 2), 2)
+-}
 createLeaf :: (Char, Int) -> (HuffmanTree, Int)
 createLeaf (x,y) = ((Leaf x y),y)
 
@@ -127,7 +141,8 @@ weight (Node w _ _) = w
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable Void = Table.empty
-codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
+codeTable (Leaf a b) = Table.insert Table.empty a [True]
+codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h []) 
 
 {- uncurryTwo f x (a, b)
    PRECONS: 
@@ -136,11 +151,11 @@ codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
 -}
 uncurryTwo f x (a,b) = f x a b
 
-{- codeTableAux h s
-   PRECONS: 
+{- codeTableAux h bc
+   PRECONS:  h is a non empty tree
    RETURNS:
    EXAMPLE:
-   VARIANT: 
+   VARIANT: amount of nodes in h?
 -}
 codeTableAux :: HuffmanTree -> BitCode -> [(Char, BitCode)]
 codeTableAux (Leaf c _) s = [(c, s)]
@@ -153,7 +168,7 @@ codeTableAux (Node _ t1 t2) s = codeTableAux t1 (s ++ [False]) ++ codeTableAux t
  -}
 encode :: HuffmanTree -> String -> BitCode
 encode _ []              = []
-encode (Leaf a b) (_:xs) = True : encode (Leaf a b) xs
+--encode (Leaf a b) (_:xs) = True : encode (Leaf a b) xs (se match m leag i codetable code för char i leaf tree är nu [True])
 encode h (x:xs)          = frJust(Table.lookup (codeTable h) x) ++ encode h xs
 
 {- compress s
@@ -175,16 +190,41 @@ decompress :: HuffmanTree -> BitCode -> String
 decompress Void _ = ""
 decompress h b = decompressAux h (decompressHelper h b)
 
+{- decompressAux h partiallyDecodedString
+   PRECONS:  h is a non empty tree
+   RETURNS: 
+   EXAMPLE:
+ -}
+
+decompressAux :: HuffmanTree -> (String, BitCode) -> String
 decompressAux (Leaf a b) (c, [])     = []
 decompressAux (Leaf a b) (c, (x:xs)) = [a] ++ decompressAux (Leaf a b) (c, xs)
 decompressAux h (c, [])              = c
 decompressAux h (c, bs)              = c ++ decompressAux h (decompressHelper h bs)
 
+{- decompressHelper h bits
+   PRECONS:  h is a non empty tree
+   RETURNS: 
+   EXAMPLE:
+ -}
+decompressHelper :: HuffmanTree -> BitCode -> (String, BitCode)
 decompressHelper (Node _ t1 t2) [] = ("", [])
 decompressHelper (Leaf c _) lst = ([c], lst)
 decompressHelper (Node _ t1 t2) (b:bs)
   | b         = decompressHelper t2 bs
   | otherwise = decompressHelper t1 bs
+
+
+--decompress :: HuffmanTree -> BitCode -> String
+--decompress _ [] = ""
+--decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
+--decompress h b = decompressAux h h b
+
+--decompressAux :: HuffmanTree -> HuffmanTree -> BitCode -> String
+--decompressAux h (Leaf a _) []         = [a]
+--decompressAux h (Leaf a _) x          = a : decompressAux h h x
+--decompressAux h (Node _ t1 t2) (x:xs) = decompressAux h (if x then t2 else t1) xs
+
 --------------------------------------------------------------------------------
 -- Test Cases
 -- You may add your own test cases here:
