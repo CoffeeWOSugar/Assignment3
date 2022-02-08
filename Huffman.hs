@@ -7,6 +7,7 @@ import PriorityQueue as PQ
 
 import Test.HUnit
 import BinomialHeap (isEmpty)
+import qualified GHC.Llvm as Void
 
 {- a bit code (of a character or string) is represented by a list of Booleans
    INVARIANT:
@@ -88,9 +89,20 @@ tableToQueueAux queue pair = PQ.insert queue (createLeaf pair)
 createLeaf :: (Char, Int) -> (HuffmanTree, Int)
 createLeaf (x,y) = ((Leaf x y),y)
 
+{- The Datatype HuffmanTree represents a huffman tree and the variants it can present as.
+   It represents the possible structures of a huffman tree by either taking the value of
+   being a leaf with it's associated values or a node with more huffman tree types
+   underneath. The tree may also be empty, in which case it is Void.
+   INVARIANT: 
+             - Each leaf is labeled with a unique character. 
+             - Each subtree is labeled with the count of all characters within that subtree
+             - Subtrees with larger character counts do not appear at a lower level in the
+               tree.
+-}
 data HuffmanTree = Void | Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Show
 
 {- huffmanTree t
+   Generates a valid huffman tree from a table of character - int pairs.
    PRECONS: t maps each key to a positive value
    RETURNS: a Huffman tree based on the character counts in the Table t
    EXAMPLE: huffmanTree (characterCounts "Huffman trees are fun!") =
@@ -153,17 +165,12 @@ weight (Node w _ _) = w
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable Void       = Table.empty
 codeTable (Leaf a b) = Table.insert Table.empty a [True]
-codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h []) where uncurryTwo f x (a,b) = f x a b
-
-{- uncurryTwo f x (a, b)
-   PRECONS: 
-   RETURNS: 
-   EXAMPLE:
--}
---uncurryTwo f x (a,b) = f x a b
+codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
+  where uncurryTwo f x (a,b) = f x a b
 
 {- codeTableAux h bc
-   PRECONS:  h is a non empty tree
+   Auxillary function, meant to be ran from codeTable.
+   PRECONS: h is a non empty tree
    RETURNS: the list of pairs with chars in h paired with thier bitcode under h
    EXAMPLE: codeTableAux (Node 3 (Node 2 (Leaf 'e' 1) (Leaf 'j' 1)) (Leaf 'h' 1)) [] = [('e', [False, False]), ('j', [False, True]), ('h', [True])]
    VARIANT: amount of nodes in h
@@ -183,12 +190,12 @@ codeTableAux (Node _ t1 t2) s = codeTableAux t1 (s ++ [False]) ++ codeTableAux t
    VARIANT: lenght of s
  -}
 encode :: HuffmanTree -> String -> BitCode
-encode _ []              = []
-encode h (x:xs)          = frJust(Table.lookup (codeTable h) x) ++ encode h xs
+encode _ []     = []
+encode h (x:xs) = frJust(Table.lookup (codeTable h) x) ++ encode h xs
 
 {- compress s
    creates a tree and code from a string
-   PRECONS:
+   PRECONS: any string
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)
    EXAMPLE: compress "huffman" = (Node 7 (Node 3 (Leaf 'n' 1) (Node 2 (Leaf 'h' 1) (Leaf 'a' 1))) (Node 4 (Node 2 (Leaf 'm' 1) (Leaf 'u' 1)) (Leaf 'f' 2)),[False,True,False,True,False,True,True,True,True,True,True,False,False,False,True,True,False,False])
             compress "" = (Void, [])
@@ -200,12 +207,13 @@ compress s = (tree, encode tree s)
 
 {- decompress h bits
    Decodes a bitcode under a huffmantree
-   PRECONS:  bits is a concatenation of valid Huffman code words for h
+   PRECONS: bits is a concatenation of valid Huffman code words for h
    RETURNS: the decoding of bits under h
    EXAMPLE: decompress (Node 8 (Leaf 't' 4) (Node 4 (Leaf 'r' 2) (Leaf 'e' 2))) [False, True, False, True, True] = "tre"
             decompress (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) [False, False] = "xx"
             decompress (Leaf 'w' 2) [True] = "w"
             decompress Void [] = ""
+   VARIANT: length Bitcode
  -}
 decompress :: HuffmanTree -> BitCode -> String
 decompress _ [] = ""
@@ -213,11 +221,12 @@ decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
 decompress h b = decompressAux h h b
 
 {- decompressAux h1 h2 bits
-   Decodes a bitcode under a huffmantree, meant to be run in decompress
+   Auxillary function, meant to be ran from decompress
    PRECONS: h1 is a huffmantree with atleast 2 leafs and h2 is a subtree of h1, bits is a concatenation of valid Huffman code words for h1
    RETURNS: the decoding of bits under h1 
    EXAMPLE: decompressAux (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) [True, True, False] = "yyx"
             decompressAux (Node 4 (Leaf 't' 2) (Node 2 (Leaf 'r' 1) (Leaf 'e' 1))) (Node 4 (Leaf 't' 2) (Node 2 (Leaf 'r' 1) (Leaf 'e' 1))) [False, True, False, True, True, True, True] = "tree"
+   VARIANT: length bitcode
  -}
 decompressAux :: HuffmanTree -> HuffmanTree -> BitCode -> String
 decompressAux _ (Leaf a _) []         = [a]
