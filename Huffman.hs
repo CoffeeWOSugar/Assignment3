@@ -22,19 +22,24 @@ pqEmpty :: PriorityQueue a
 pqEmpty = PQ.empty
 
 {- characterCounts s
-   PRECONS: A string s.
+   Gives a table of characters as keys and the amount of times
+   they occur in the string as the associated value
+   PRECONS: Any string s.
    RETURNS: A table that maps each character that occurs in s to the number of
             times the character occurs in s.
-   EXAMPLE:
+   EXAMPLE: characterCounts "Huffman trees are fun!" = 
+            T [('H',1),('u',2),('f',3),('m',1),('a',2),('n',2),(' ',3),('t',1),('r',2),('e',3),('s',1),('!',1)]
  -}
 characterCounts :: String -> Table Char Int
 characterCounts t = characterCountsAux t Table.empty
 
 {- characterCountsAux s t
-   PRECONS: A string s and an empty table t.
+   Auxillary function, meant to be ran from characterCounts.
+   PRECONS: Any string s and an empty table t.
    RETURNS: A table that maps each character that occurs in s to the number of 
             times the character occurs in s. 
-   EXAMPLE: 
+   EXAMPLE: characterCountsAux "Huffman trees are fun!" Table.empty ==
+            T [('H',1),('u',2),('f',3),('m',1),('a',2),('n',2),(' ',3),('t',1),('r',2),('e',3),('s',1),('!',1)]
    VARIANT: length s
 -}
 characterCountsAux :: String -> Table Char Int -> Table Char Int
@@ -43,6 +48,7 @@ characterCountsAux (x:xs) table | Table.exists table x = characterCountsAux xs (
                                 | otherwise = characterCountsAux xs (Table.insert table x 1)
 
 {- frJust a
+   Removes the 'Just' type from any type a
    PRECONS: A value of type Maybe a. Nothing will return an error.
    RETURNS: The value of a.
    EXAMPLE: frJust (Just 6) = 6
@@ -51,43 +57,44 @@ frJust :: Maybe a -> a
 frJust (Just a) = a
 frJust Nothing = error "Nothing in frJust."
 
---tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
-
--- Snyggt! 
---omvandlingen från char int i table till queue av träd krävde att vi skapar en aux som skapar leafs och insertar
 {- tableToQueue t
-   PRECONS: är det ett problem om int = 0 , dvs om table inte genererats av tidigare funktion
-   RETURNS: A priorityQueue with leafs that contains a key and value pair
-   EXAMPLE: 
+   Takes a table from the characterCounts function and turns it into a
+   priority queue of Huffmantree leaves.
+   PRECONS: A table of characters and their respective counts.
+   RETURNS: A priorityQueue with leaves which contain a key - value pair each.
+   EXAMPLE: tableToQueue (characterCounts "Huffman trees are fun!") =
+            BinoHeap [Node 2 1 (Leaf 's' 1) [Node 1 2 (Leaf 'r' 2) [Node 0 3 (Leaf 'e' 3) []],Node 0 1 (Leaf '!' 1) []],Node 3 1 (Leaf 'H' 1) [Node 2 1 (Leaf 't' 1) [Node 1 2 (Leaf 'a' 2) [Node 0 2 (Leaf 'n' 2) []],Node 0 3 (Leaf ' ' 3) []],Node 1 1 (Leaf 'm' 1) [Node 0 3 (Leaf 'f' 3) []],Node 0 2 (Leaf 'u' 2) []]]
 -}
 tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
 tableToQueue t = Table.iterate t tableToQueueAux PQ.empty
 
-{- tableToQueueAux t
-   PRECONS: 
-   RETURNS: A priorityQueue with leafs that contains a key and value pair
-   EXAMPLE: 
+{- tableToQueueAux t (c, n)
+   Auxillary function, meant to be ran from tableToQueue
+   PRECONS: A table of characters and their respective counts and a
+            pair which is to be inserted into the queue
+   RETURNS: The priorityQueue with the pair inserted as a leaf.
+   EXAMPLE: tableToQueueAux (characterCounts "Huffman trees are fun!") =
+            BinoHeap [Node 2 1 (Leaf 's' 1) [Node 1 2 (Leaf 'r' 2) [Node 0 3 (Leaf 'e' 3) []],Node 0 1 (Leaf '!' 1) []],Node 3 1 (Leaf 'H' 1) [Node 2 1 (Leaf 't' 1) [Node 1 2 (Leaf 'a' 2) [Node 0 2 (Leaf 'n' 2) []],Node 0 3 (Leaf ' ' 3) []],Node 1 1 (Leaf 'm' 1) [Node 0 3 (Leaf 'f' 3) []],Node 0 2 (Leaf 'u' 2) []]]
 -}
 tableToQueueAux :: PriorityQueue HuffmanTree -> (Char, Int) -> PriorityQueue HuffmanTree
-tableToQueueAux x y = PQ.insert x (createLeaf y)
+tableToQueueAux queue pair = PQ.insert queue (createLeaf pair)
 
---skapar leafs och av key - value par, och lägger sedan till i par med leaf o value så att de kan insertas i queue
-{- createLeaf charIntPair
-   PRECONS: 
-   RETURNS: (a leaf based on charIntPair, the int in charIntPair)
-   EXAMPLE:  createLeaf ('a',2) = ((Leaf 'a' 2), 2)
+{- createLeaf (c, n)
+   creates a leaf from any pair (character, Int)
+   PRECONS: Any tuple of a character and int
+   RETURNS: A leaf based on the character and integer tupled with the integer.
+   EXAMPLE: createLeaf ('a',2) = ((Leaf 'a' 2), 2)
 -}
 createLeaf :: (Char, Int) -> (HuffmanTree, Int)
 createLeaf (x,y) = ((Leaf x y),y)
 
--- modify and add comments as needed
 data HuffmanTree = Void | Leaf Char Int | Node Int HuffmanTree HuffmanTree deriving Show
 
 {- huffmanTree t
-   PRECONS:  t maps each key to a positive value
-   RETURNS: a Huffman tree based on the character counts in t
-   EXAMPLE:
-   ! UNTESTED !
+   PRECONS: t maps each key to a positive value
+   RETURNS: a Huffman tree based on the character counts in the Table t
+   EXAMPLE: huffmanTree (characterCounts "Huffman trees are fun!") =
+            Node 22 (Node 9 (Node 4 (Node 2 (Leaf 't' 1) (Leaf 'm' 1)) (Leaf 'r' 2)) (Node 5 (Leaf 'n' 2) (Node 3 (Leaf '!' 1) (Node 2 (Leaf 'H' 1) (Leaf 's' 1))))) (Node 13 (Node 6 (Leaf ' ' 3) (Leaf 'f' 3)) (Node 7 (Leaf 'e' 3) (Node 4 (Leaf 'a' 2) (Leaf 'u' 2))))
  -}
 huffmanTree :: Table Char Int -> HuffmanTree
 huffmanTree t
@@ -95,39 +102,40 @@ huffmanTree t
   | otherwise = fst (fst (least (huffmanTreeAux (tableToQueue t))))
 
 {- huffmanTreeAux q
+   Auxillary function, meant to be ran from huffmanTree
    PRECONS: A priorityQueue of at least one HuffmanTree.
-   RETURNS: A combined Huffmantree from the HuffmanTrees in the priorityQueue
-   EXAMPLE: 
+   RETURNS: A combined single Huffmantree built from the HuffmanTrees in the priorityQueue.
+   EXAMPLE: huffmanTreeAux (tableToQueue (characterCounts "Huffman trees are fun!")) =
+            BinoHeap [Node 0 22 (Node 22 (Node 9 (Node 4 (Node 2 (Leaf 't' 1) (Leaf 'm' 1)) (Leaf 'r' 2)) (Node 5 (Leaf 'n' 2) (Node 3 (Leaf '!' 1) (Node 2 (Leaf 'H' 1) (Leaf 's' 1))))) (Node 13 (Node 6 (Leaf ' ' 3) (Leaf 'f' 3)) (Node 7 (Leaf 'e' 3) (Node 4 (Leaf 'a' 2) (Leaf 'u' 2))))) []]
    VARIANT: length PirorityQueue
-   ! UNTESTED !
 -}
 huffmanTreeAux :: PriorityQueue HuffmanTree -> PriorityQueue HuffmanTree
 huffmanTreeAux q
   | PQ.is_empty q    = PQ.empty
   | PQ.is_empty nxtQ = q
-  | otherwise        = huffmanTreeAux (PQ.insert (snd (least nxtQ)) (mergeTrees nxtT nxt2T, prio + prio2))
---     (The queue without the next two elements in queue) /\            /\ next two trees merged /\ the sum of respective priorities.
-  where nxtQ  = snd (least q)
-        nxtT  = fst (fst (least q))
-        prio  = snd (fst (least q))
-        nxt2Q = snd (least nxtQ)
-        nxt2T = fst (fst (least nxtQ))
-        prio2 = snd (fst (least nxtQ))
-
+  | otherwise        = huffmanTreeAux (PQ.insert nxt2Q (mergeTrees nxtT nxt2T, prio + prio2))
+  where nxtQ  = snd (least q)          -- Next Queue
+        nxtT  = fst (fst (least q))    -- Next Tree
+        prio  = snd (fst (least q))    -- Priority of next Tree
+        nxt2Q = snd (least nxtQ)       -- Second to next Queue
+        nxt2T = fst (fst (least nxtQ)) -- Second to next Tree
+        prio2 = snd (fst (least nxtQ)) -- Priority of second to next Tree
 
 {- mergeTrees t1 t2
-   PRECONS: Two Huffmantrees
-   RETURNS: A Huffmantree with the sum of the weights and the two trees as it's children.
-   EXAMPLE: 
-   ! UNTESTED !
+   merges two huffmanTrees and returns the combined tree with an extra node.
+   PRECONS: Two Huffman trees
+   RETURNS: A Huffman tree with the sum of the weights and the two trees as it's children.
+   EXAMPLE: mergeTrees (Leaf 'h' 1) (Leaf 'i' 2) =
+            Node 3 (Leaf 'h' 1) (Leaf 'i' 2)
 -}
 mergeTrees :: HuffmanTree -> HuffmanTree -> HuffmanTree
 mergeTrees t1 t2 = Node (weight t1 + weight t2) t1 t2
 
 {- weight t
-   PRECONS: 
-   RETURNS:
-   EXAMPLE: 
+   Gives the weight of any HuffmanTree, 0 if Void.
+   PRECONS: Any Huffman tree
+   RETURNS: The value/weight of the entered node, 0 if void
+   EXAMPLE: weight Node 3 (Leaf 'h' 1) (Leaf 'i' 2) == 3
 -}
 weight :: HuffmanTree -> Int
 weight Void         = 0
@@ -135,14 +143,17 @@ weight (Leaf _ w)   = w
 weight (Node w _ _) = w
 
 {- codeTable h
-   PRECONS: 
-   RETURNS: a table that maps each character in h to its Huffman code
-   EXAMPLE:
+   Returns the table of characters and their respective Huffman coding
+   in the entered huffmantree.
+   PRECONS: Any valid HuffmanTree
+   RETURNS: A table that maps each character in h to its Huffman code
+   EXAMPLE: codeTable (huffmanTree (characterCounts "abcdef")) =
+            T [('c',[False,False]),('b',[False,True]),('a',[True,False,False]),('e',[True,False,True]),('d',[True,True,False]),('f',[True,True,True])]
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
-codeTable Void = Table.empty
+codeTable Void       = Table.empty
 codeTable (Leaf a b) = Table.insert Table.empty a [True]
-codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h []) 
+codeTable h          = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h []) 
 
 {- uncurryTwo f x (a, b)
    PRECONS: 
@@ -152,7 +163,7 @@ codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
 uncurryTwo f x (a,b) = f x a b
 
 {- codeTableAux h bc
-   PRECONS:  h is a non empty tree
+   PRECONS: h is a non empty tree
    RETURNS:
    EXAMPLE:
    VARIANT: amount of nodes in h?
@@ -180,50 +191,15 @@ compress :: String -> (HuffmanTree, BitCode)
 compress s = (tree, encode tree s)
   where tree = huffmanTree(characterCounts s)
 
-
-{- decompress h bits
-   PRECONS:  bits is a concatenation of valid Huffman code words for h
-   RETURNS: the decoding of bits under h
-   EXAMPLE:
- -}
 decompress :: HuffmanTree -> BitCode -> String
-decompress Void _ = ""
-decompress h b = decompressAux h (decompressHelper h b)
+decompress _ [] = ""
+decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
+decompress h b = decompressAux h h b
 
-{- decompressAux h partiallyDecodedString
-   PRECONS:  h is a non empty tree
-   RETURNS: 
-   EXAMPLE:
- -}
-
-decompressAux :: HuffmanTree -> (String, BitCode) -> String
-decompressAux (Leaf a b) (c, [])     = []
-decompressAux (Leaf a b) (c, (x:xs)) = [a] ++ decompressAux (Leaf a b) (c, xs)
-decompressAux h (c, [])              = c
-decompressAux h (c, bs)              = c ++ decompressAux h (decompressHelper h bs)
-
-{- decompressHelper h bits
-   PRECONS:  h is a non empty tree
-   RETURNS: 
-   EXAMPLE:
- -}
-decompressHelper :: HuffmanTree -> BitCode -> (String, BitCode)
-decompressHelper (Node _ t1 t2) [] = ("", [])
-decompressHelper (Leaf c _) lst = ([c], lst)
-decompressHelper (Node _ t1 t2) (b:bs)
-  | b         = decompressHelper t2 bs
-  | otherwise = decompressHelper t1 bs
-
-
---decompress :: HuffmanTree -> BitCode -> String
---decompress _ [] = ""
---decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
---decompress h b = decompressAux h h b
-
---decompressAux :: HuffmanTree -> HuffmanTree -> BitCode -> String
---decompressAux h (Leaf a _) []         = [a]
---decompressAux h (Leaf a _) x          = a : decompressAux h h x
---decompressAux h (Node _ t1 t2) (x:xs) = decompressAux h (if x then t2 else t1) xs
+decompressAux :: HuffmanTree -> HuffmanTree -> BitCode -> String
+decompressAux h (Leaf a _) []         = [a]
+decompressAux h (Leaf a _) x          = a : decompressAux h h x
+decompressAux h (Node _ t1 t2) (x:xs) = decompressAux h (if x then t2 else t1) xs
 
 --------------------------------------------------------------------------------
 -- Test Cases
