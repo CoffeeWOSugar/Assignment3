@@ -19,6 +19,13 @@ type BitCode = [Bool]
 
 --------------------------------------------------------------------------------
 
+{-
+Authored by: 
+   Anton Rodell
+   Vincent Andersson
+   2022-02-08
+-}
+
 pqEmpty :: PriorityQueue a
 pqEmpty = PQ.empty
 
@@ -163,9 +170,9 @@ weight (Node w _ _) = w
             T [('c',[False,False]),('b',[False,True]),('a',[True,False,False]),('e',[True,False,True]),('d',[True,True,False]),('f',[True,True,True])]
  -}
 codeTable :: HuffmanTree -> Table Char BitCode
-codeTable Void       = Table.empty
-codeTable (Leaf a b) = Table.insert Table.empty a [True]
-codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
+codeTable Void               = Table.empty
+codeTable (Leaf a b)         = Table.insert Table.empty a [True]
+codeTable h                  = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
   where uncurryTwo f x (a,b) = f x a b
 
 {- codeTableAux h bc
@@ -176,7 +183,7 @@ codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h [])
    VARIANT: amount of nodes in h
 -}
 codeTableAux :: HuffmanTree -> BitCode -> [(Char, BitCode)]
-codeTableAux (Leaf c _) s = [(c, s)]
+codeTableAux (Leaf c _) s     = [(c, s)]
 codeTableAux (Node _ t1 t2) s = codeTableAux t1 (s ++ [False]) ++ codeTableAux t2 (s ++ [True])
 
 {- encode h s
@@ -202,7 +209,7 @@ encode h (x:xs) = frJust(Table.lookup (codeTable h) x) ++ encode h xs
             compress "aaa" = ((Leaf 'a' 3), [True, True, True])
  -}
 compress :: String -> (HuffmanTree, BitCode)
-compress s = (tree, encode tree s)
+compress s   = (tree, encode tree s)
   where tree = huffmanTree(characterCounts s)
 
 {- decompress h bits
@@ -216,9 +223,9 @@ compress s = (tree, encode tree s)
    VARIANT: length Bitcode
  -}
 decompress :: HuffmanTree -> BitCode -> String
-decompress _ [] = ""
+decompress _ []              = ""
 decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
-decompress h b = decompressAux h h b
+decompress h b               = decompressAux h h b
 
 {- decompressAux h1 h2 bits
    Auxillary function, meant to be ran from decompress
