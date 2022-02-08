@@ -51,10 +51,6 @@ frJust :: Maybe a -> a
 frJust (Just a) = a
 frJust Nothing = error "Nothing in frJust."
 
---tableToQueue :: Table Char Int -> PriorityQueue HuffmanTree
-
--- Snyggt! 
---omvandlingen från char int i table till queue av träd krävde att vi skapar en aux som skapar leafs och insertar
 {- tableToQueue t
    PRECONS: är det ett problem om int = 0 , dvs om table inte genererats av tidigare funktion
    RETURNS: A priorityQueue with leafs that contains a key and value pair
@@ -118,7 +114,7 @@ huffmanTreeAux q
 {- mergeTrees t1 t2
    PRECONS: Two Huffmantrees
    RETURNS: A Huffmantree with the sum of the weights and the two trees as it's children.
-   EXAMPLE: 
+   EXAMPLE: mergeTrees (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) (Node 4 (Leaf 'a'   ) (Leaf 'y' 1))
    ! UNTESTED !
 -}
 mergeTrees :: HuffmanTree -> HuffmanTree -> HuffmanTree
@@ -142,88 +138,76 @@ weight (Node w _ _) = w
 codeTable :: HuffmanTree -> Table Char BitCode
 codeTable Void = Table.empty
 codeTable (Leaf a b) = Table.insert Table.empty a [True]
-codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h []) 
+codeTable h    = foldl (uncurryTwo Table.insert) Table.empty (codeTableAux h []) where uncurryTwo f x (a,b) = f x a b
 
 {- uncurryTwo f x (a, b)
    PRECONS: 
-   RETURNS: a table that maps each character in h to its Huffman code
+   RETURNS: 
    EXAMPLE:
 -}
-uncurryTwo f x (a,b) = f x a b
+--uncurryTwo f x (a,b) = f x a b
 
 {- codeTableAux h bc
    PRECONS:  h is a non empty tree
-   RETURNS:
-   EXAMPLE:
-   VARIANT: amount of nodes in h?
+   RETURNS: the list of pairs with chars in h paired with thier bitcode under h
+   EXAMPLE: codeTableAux (Node 3 (Node 2 (Leaf 'e' 1) (Leaf 'j' 1)) (Leaf 'h' 1)) [] = [('e', [False, False]), ('j', [False, True]), ('h', [True])]
+   VARIANT: amount of nodes in h
 -}
 codeTableAux :: HuffmanTree -> BitCode -> [(Char, BitCode)]
 codeTableAux (Leaf c _) s = [(c, s)]
 codeTableAux (Node _ t1 t2) s = codeTableAux t1 (s ++ [False]) ++ codeTableAux t2 (s ++ [True])
 
 {- encode h s
+   Turns a string into its code under a tree.
    PRECONS: All characters in s appear in h
    RETURNS: the concatenation of the characters of s encoded using the Huffman code table of h.
-   EXAMPLE:
+   EXAMPLE: encode Void "" = []
+            encode (Leaf 'c' 4) "c" = [True]
+            encode (Leaf 'e' 6) "ee" = [True, True]
+            encode (Node 8 (Leaf 't' 4) (Node 4 (Leaf 'r' 2) (Leaf 'e' 2))) "te" = [False, True, True]
+   VARIANT: lenght of s
  -}
 encode :: HuffmanTree -> String -> BitCode
 encode _ []              = []
---encode (Leaf a b) (_:xs) = True : encode (Leaf a b) xs (se match m leag i codetable code för char i leaf tree är nu [True])
 encode h (x:xs)          = frJust(Table.lookup (codeTable h) x) ++ encode h xs
 
 {- compress s
+   creates a tree and code from a string
    PRECONS:
    RETURNS: (a Huffman tree based on s, the Huffman coding of s under this tree)
-   EXAMPLE:
+   EXAMPLE: compress "huffman" = (Node 7 (Node 3 (Leaf 'n' 1) (Node 2 (Leaf 'h' 1) (Leaf 'a' 1))) (Node 4 (Node 2 (Leaf 'm' 1) (Leaf 'u' 1)) (Leaf 'f' 2)),[False,True,False,True,False,True,True,True,True,True,True,False,False,False,True,True,False,False])
+            compress "" = (Void, [])
+            compress "aaa" = ((Leaf 'a' 3), [True, True, True])
  -}
 compress :: String -> (HuffmanTree, BitCode)
 compress s = (tree, encode tree s)
   where tree = huffmanTree(characterCounts s)
 
-
 {- decompress h bits
+   Decodes a bitcode under a huffmantree
    PRECONS:  bits is a concatenation of valid Huffman code words for h
    RETURNS: the decoding of bits under h
-   EXAMPLE:
+   EXAMPLE: decompress (Node 8 (Leaf 't' 4) (Node 4 (Leaf 'r' 2) (Leaf 'e' 2))) [False, True, False, True, True] = "tre"
+            decompress (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) [False, False] = "xx"
+            decompress (Leaf 'w' 2) [True] = "w"
+            decompress Void [] = ""
  -}
 decompress :: HuffmanTree -> BitCode -> String
-decompress Void _ = ""
-decompress h b = decompressAux h (decompressHelper h b)
+decompress _ [] = ""
+decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
+decompress h b = decompressAux h h b
 
-{- decompressAux h partiallyDecodedString
-   PRECONS:  h is a non empty tree
-   RETURNS: 
-   EXAMPLE:
+{- decompressAux h1 h2 bits
+   Decodes a bitcode under a huffmantree, meant to be run in decompress
+   PRECONS: h1 is a huffmantree with atleast 2 leafs and h2 is a subtree of h1, bits is a concatenation of valid Huffman code words for h1
+   RETURNS: the decoding of bits under h1 
+   EXAMPLE: decompressAux (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) (Node 2 (Leaf 'x' 1) (Leaf 'y' 1)) [True, True, False] = "yyx"
+            decompressAux (Node 4 (Leaf 't' 2) (Node 2 (Leaf 'r' 1) (Leaf 'e' 1))) (Node 4 (Leaf 't' 2) (Node 2 (Leaf 'r' 1) (Leaf 'e' 1))) [False, True, False, True, True, True, True] = "tree"
  -}
-
-decompressAux :: HuffmanTree -> (String, BitCode) -> String
-decompressAux (Leaf a b) (c, [])     = []
-decompressAux (Leaf a b) (c, (x:xs)) = [a] ++ decompressAux (Leaf a b) (c, xs)
-decompressAux h (c, [])              = c
-decompressAux h (c, bs)              = c ++ decompressAux h (decompressHelper h bs)
-
-{- decompressHelper h bits
-   PRECONS:  h is a non empty tree
-   RETURNS: 
-   EXAMPLE:
- -}
-decompressHelper :: HuffmanTree -> BitCode -> (String, BitCode)
-decompressHelper (Node _ t1 t2) [] = ("", [])
-decompressHelper (Leaf c _) lst = ([c], lst)
-decompressHelper (Node _ t1 t2) (b:bs)
-  | b         = decompressHelper t2 bs
-  | otherwise = decompressHelper t1 bs
-
-
---decompress :: HuffmanTree -> BitCode -> String
---decompress _ [] = ""
---decompress (Leaf a b) (x:xs) = a : decompress (Leaf a b) xs
---decompress h b = decompressAux h h b
-
---decompressAux :: HuffmanTree -> HuffmanTree -> BitCode -> String
---decompressAux h (Leaf a _) []         = [a]
---decompressAux h (Leaf a _) x          = a : decompressAux h h x
---decompressAux h (Node _ t1 t2) (x:xs) = decompressAux h (if x then t2 else t1) xs
+decompressAux :: HuffmanTree -> HuffmanTree -> BitCode -> String
+decompressAux _ (Leaf a _) []         = [a]
+decompressAux h (Leaf a _) x          = a : decompressAux h h x
+decompressAux h (Node _ t1 t2) (x:xs) = decompressAux h (if x then t2 else t1) xs
 
 --------------------------------------------------------------------------------
 -- Test Cases
